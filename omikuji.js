@@ -5,7 +5,7 @@ export default {
         var infoParam = url.searchParams.get("info")
         var returnText = ""
         var statusCode = 0
-        if (infoParam = "") {
+        if (infoParam != null) {
             returnText = "About this API\nThis API randomly generates and returns fortune slips. It is powered by Cloudflare Workers.\n\nHow to Specify the users Parameter\nSpecify one or more user names, separated by commas.\nFor example: ?users=AAA,BBB,CCC\nAn error will be displayed if the parameter is missing.\n\nSource Code\nAvailable on GitHub: https://github.com/Sotetsu11000/Omikuji-API\n\nVersion\n1.1\n\nTools Used\nCloudflare Workers (Pages), Microsoft Visual Studio\n\nAuthor\nSotetsu11000"
             statusCode = 200
         } else if (usersParam == null || usersParam == "") {
