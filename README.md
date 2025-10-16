@@ -3,7 +3,7 @@
 おみくじをランダムで生成するAPIです。
 
 ## バージョン
-1.1
+1.2
 
 ## 使用ツール
 - Cloudflare Workers (Pages)
