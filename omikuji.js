@@ -1,18 +1,8 @@
 export default {
     async fetch(request) {
-        var url = new URL(request.url)
-        var usersParam = url.searchParams.get("users")
-        var infoParam = url.searchParams.get("info")
-        var returnText = ""
-        var statusCode = 0
-        if (infoParam != null) {
-            returnText = "About this API\nThis API randomly generates and returns fortune slips. It is powered by Cloudflare Workers.\n\nHow to Specify the users Parameter\nSpecify one or more user names, separated by commas.\nFor example: ?users=AAA,BBB,CCC\nAn error will be displayed if the parameter is missing.\n\nSource Code\nAvailable on GitHub: https://github.com/Sotetsu11000/Omikuji-API\n\nVersion\n1.1\n\nTools Used\nCloudflare Workers (Pages), Microsoft Visual Studio\n\nAuthor\nSotetsu11000"
-            statusCode = 200
-        } else if (usersParam == null || usersParam == "") {
-            returnText = "The parameter \"users\" is not specified. You can see more information by adding \"?info\" to the end of the URL."
-            statusCode = 400
-        } else {
-            var users = usersParam.split(",")
+        const version = "1.3"
+        const author = "Sotetsu11000"
+        function generateOmikuji(users, type) {
             var omikujiList = ["大吉", "中吉", "小吉", "吉", "末吉", "凶"]
             var message = {
                 "大吉": [
@@ -66,18 +56,120 @@ export default {
                 ]
             }
             var luckyColor = ["赤", "青", "黄", "緑", "紫", "オレンジ", "ピンク", "水色", "白", "黒", "灰色", "茶色", "金色", "銀色", "紺"]
-            users.forEach(user => {
-                var result = omikujiList[Math.floor(Math.random() * omikujiList.length)]
-                returnText += user + "さんの運勢は...　" + result + "です" + (result == "凶" ? "..." : "!") + "　" + message[result][Math.floor(Math.random() * 6)] + "　ラッキーカラーは" + luckyColor[Math.floor(Math.random() * luckyColor.length)] + "！\n\n"
-            })
-            statusCode = 200
-        }
-        return new Response(returnText, {
-            status: statusCode,
-            headers: {
-                "Content-Type": "text/plain; charset=utf-8",
-                "Cache-Control": "no-store"
+            var returnText = ""
+            switch (type) {
+                case "text":
+                    users.forEach(user => {
+                        var result = omikujiList[Math.floor(Math.random() * omikujiList.length)]
+                        returnText += user + "さんの運勢は...　" + result + "です" + (result == "凶" ? "..." : "!") + "　" + message[result][Math.floor(Math.random() * 6)] + "　ラッキーカラーは" + luckyColor[Math.floor(Math.random() * luckyColor.length)] + "！\n\n"
+                    })
+                    break
+                case "json":
+                    var returnData = {
+                        meta: {
+                            version: version,
+                            author: author,
+                            lang: "ja"
+                        },
+                        results: []
+                    }
+                    users.forEach(user => {
+                        var result = omikujiList[Math.floor(Math.random() * omikujiList.length)]
+                        returnData.results.push({
+                            name: user,
+                            fortune: result,
+                            message: message[result][Math.floor(Math.random() * 6)],
+                            luckyColor: luckyColor[Math.floor(Math.random() * luckyColor.length)]
+                        })
+                    })
+                    returnText = JSON.stringify(returnData)
+                    break
             }
-        })
+            return returnText
+        }
+        switch (request.method) {
+            case "GET":
+                var url = new URL(request.url)
+                var usersParam = url.searchParams.get("users")
+                var type = url.searchParams.get("type")
+                var lang = url.searchParams.get("lang")
+                if (type == null) {
+                    type = "text"
+                } else if (type.toLowerCase() == "json") {
+                    type = "json"
+                } else {
+                    type = "text"
+                }
+                /*
+                if (lang == null) {
+                    lang = "ja"
+                } else if (type.toLowerCase() == "en") {
+                    type = "en"
+                } else {
+                    type = "ja"
+                }
+
+                今後、英語対応いたします。
+                */
+                var returnText = ""
+                var statusCode = 0
+                if (usersParam == null || usersParam == "") {
+                    returnText = "The parameter \"users\" is not specified. You can check detailed information by visiting https://github.com/Sotetsu11000/Omikuji-API"
+                    statusCode = 400
+                } else {
+                    returnText = generateOmikuji(usersParam.split(","), type)
+                    statusCode = 200
+                }
+                return new Response(returnText, {
+                    status: statusCode,
+                    headers: {
+                        "Content-Type": type == "json" ? "application/json" : "text/plain; charset=utf-8",
+                        "Cache-Control": "no-store",
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                        "Access-Control-Allow-Headers": "Content-Type"
+                    }
+                })
+                break
+            case "POST":
+                var body = await request.json()
+                var users = body.users
+                var type = body.type
+                // var lang = body.lang
+                if (type == null) {
+                    type = "text"
+                } else if (type.toLowerCase() == "json") {
+                    type = "json"
+                } else {
+                    type = "text"
+                }
+                var returnText = ""
+                var statusCode = 0
+                if (!users || !Array.isArray(users) || users.length == 0) {
+                    returnText = "The parameter \"users\" is not a valid value. Please specify the parameter as an \"Array\"."
+                    statusCode = 400
+                } else {
+                    returnText = generateOmikuji(users, type)
+                }
+                return new Response(returnText, {
+                    status: statusCode,
+                    headers: {
+                        "Content-Type": type == "json" ? "application/json" : "text/plain; charset=utf-8",
+                        "Cache-Control": "no-store",
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                        "Access-Control-Allow-Headers": "Content-Type"
+                    }
+                })
+                break
+            default:
+                return new Response("Method not supported", {
+                    status: 405,
+                    headers: {
+                        "Content-Type": "text/plain; charset=utf-8"
+                    }
+                })
+                break
+        }
     }
 }
