@@ -6,14 +6,11 @@
 1.3
 
 ## 使用ツール
-- Cloudflare Workers (Pages)
-- Microsoft Visual Studio
-- Microsoft Edge
-- OpenAI ChatGPT
-- Microsoft Copilot
+- Cloudflare Workers
+- Microsoft Visual Studio 2022
 
 ## 作者
-Sotetsu11000
+Shimesaba2415
 
 
 ## ライセンス
